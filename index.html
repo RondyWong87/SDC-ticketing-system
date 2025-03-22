@@ -3,41 +3,138 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SDC Ticketing System</title>
+  <title>SDC Task Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #333;
+    }
+    input, textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      background-color: #f9f9f9;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
-  <h1>SDC Ticketing System</h1>
-  <form id="ticketForm">
-    <input type="text" id="title" placeholder="Ticket Title" required>
-    <button type="submit">Add Ticket</button>
+  <h1>SDC Task Manager</h1>
+  <form id="taskForm">
+    <input type="text" id="title" placeholder="Task Title" required>
+    <textarea id="description" placeholder="Task Description"></textarea>
+    <button type="submit">Add Task</button>
   </form>
-  <ul id="ticketList"></ul>
+  <h2>Tasks</h2>
+  <ul id="taskList"></ul>
 
-  <!-- Load Supabase Library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- Load Supabase JavaScript Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    window.onload = function() {
-      // Initialize Supabase client
-      const supabaseClient = supabase.createClient(
-        'https://ckwvwyytxrvwotlxczsw.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrd3Z3eXl0eHJ2d290bHhjenN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI2NTk5ODgsImV4cCI6MjA1ODIzNTk4OH0.nJxgOz0Rf_UQgtdP-MGiXK3Z7XQxmwNhdJflWguKl-k'
-      );
+    // Initialize Supabase client with corrected syntax
+    const supabase = supabase.createClient(
+      'https://ckwvwyytxrvwotlxczsw.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrd3Z3eXl0eHJ2d290bHhjenN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI2NTk5ODgsImV4cCI6MjA1ODIzNTk4OH0.nJxgOz0Rf_UQgtdP-MGiXK3Z7XQxmwNhdJflWguKl-k'
+    );
 
-      // Example: Add a ticket
-      document.getElementById('ticketForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const title = document.getElementById('title').value;
-        const { data, error } = await supabaseClient
-          .from('tickets')
-          .insert([{ title }]);
-        if (error) {
-          console.error('Error adding ticket:', error);
-        } else {
-          document.getElementById('ticketForm').reset();
-          // Optionally update UI
-        }
-      });
-    };
+    // Load tasks when the page loads
+    loadTasks();
+
+    // Set up real-time listener for tasks
+    supabase
+      .from('tasks')
+      .on('INSERT', payload => {
+        addTaskToList(payload.new);
+      })
+      .on('UPDATE', payload => {
+        updateTaskInList(payload.new);
+      })
+      .on('DELETE', payload => {
+        removeTaskFromList(payload.old.id);
+      })
+      .subscribe();
+
+    // Handle form submission to add a new task
+    document.getElementById('taskForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([{ title, description }]);
+      if (error) {
+        console.error('Error adding task:', error);
+        alert('Failed to add task. Check console for details.');
+      } else {
+        document.getElementById('taskForm').reset();
+      }
+    });
+
+    // Function to load all tasks
+    async function loadTasks() {
+      const { data, error } = await supabase.from('tasks').select('*');
+      if (error) {
+        console.error('Error loading tasks:', error);
+        alert('Failed to load tasks. Check console for details.');
+      } else {
+        data.forEach(task => addTaskToList(task));
+      }
+    }
+
+    // Function to add a task to the list
+    function addTaskToList(task) {
+      const li расска
+
+li.id = `task-${task.id}`;
+      li.innerHTML = `
+        <strong>${task.title}</strong><br>
+        ${task.description || 'No description'}<br>
+        Status: ${task.status} (Created: ${new Date(task.created_at).toLocaleString()})
+      `;
+      document.getElementById('taskList').appendChild(li);
+    }
+
+    // Function to update a task in the list
+    function updateTaskInList(task) {
+      const li = document.getElementById(`task-${task.id}`);
+      if (li) {
+        li.innerHTML = `
+          <strong>${task.title}</strong><br>
+          ${task.description || 'No description'}<br>
+          Status: ${task.status} (Created: ${new Date(task.created_at).toLocaleString()})
+        `;
+      }
+    }
+
+    // Function to remove a task from the list
+    function removeTaskFromList(id) {
+      const li = document.getElementById(`task-${id}`);
+      if (li) li.remove();
+    }
   </script>
 </body>
 </html>
