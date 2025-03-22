@@ -55,8 +55,9 @@
   <!-- Load Supabase JavaScript Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Initialize Supabase client with corrected syntax
-    const supabase = supabase.createClient(
+    // Correctly initialize Supabase client
+    const { createClient } = window.supabase;
+    const supabaseClient = createClient(
       'https://ckwvwyytxrvwotlxczsw.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrd3Z3eXl0eHJ2d290bHhjenN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI2NTk5ODgsImV4cCI6MjA1ODIzNTk4OH0.nJxgOz0Rf_UQgtdP-MGiXK3Z7XQxmwNhdJflWguKl-k'
     );
@@ -65,7 +66,7 @@
     loadTasks();
 
     // Set up real-time listener for tasks
-    supabase
+    supabaseClient
       .from('tasks')
       .on('INSERT', payload => {
         addTaskToList(payload.new);
@@ -83,12 +84,12 @@
       e.preventDefault();
       const title = document.getElementById('title').value;
       const description = document.getElementById('description').value;
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('tasks')
         .insert([{ title, description }]);
       if (error) {
         console.error('Error adding task:', error);
-        alert('Failed to add task. Check console for details.');
+        alert('Failed to add task: ' + error.message);
       } else {
         document.getElementById('taskForm').reset();
       }
@@ -96,10 +97,10 @@
 
     // Function to load all tasks
     async function loadTasks() {
-      const { data, error } = await supabase.from('tasks').select('*');
+      const { data, error } = await supabaseClient.from('tasks').select('*');
       if (error) {
         console.error('Error loading tasks:', error);
-        alert('Failed to load tasks. Check console for details.');
+        alert('Failed to load tasks: ' + error.message);
       } else {
         data.forEach(task => addTaskToList(task));
       }
@@ -107,9 +108,8 @@
 
     // Function to add a task to the list
     function addTaskToList(task) {
-      const li расска
-
-li.id = `task-${task.id}`;
+      const li = document.createElement('li');
+      li.id = `task-${task.id}`;
       li.innerHTML = `
         <strong>${task.title}</strong><br>
         ${task.description || 'No description'}<br>
